@@ -248,7 +248,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 ElevatedButton.icon(
                                   icon: const Icon(Icons.save),
                                   label: const Text(' Save  '),
-                                  onPressed: _saveProfile,
+                                   onPressed: _saveProfile,
                                 ),
                               ],
                             ),
