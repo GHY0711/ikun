@@ -4,6 +4,8 @@ import '../../modules/user/start_page.dart';
 import '../../modules/user/home_page.dart';
 import '../../modules/admin/admin_home.dart';
 import '../services/user_service.dart';
+import '../modules/admin/user_management.dart';
+import 'block_page.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -37,10 +39,14 @@ class AuthWrapper extends StatelessWidget {
             final userType = snapshot.data!;
 
             if (userType == 'staff') {
-              return const AdminHomePage();
+              return const UserManagementPage();
             }
 
-            return const HomePage();
+            if (userType == 'user') {
+              return const HomePage();
+            }
+
+            return const BlockPage();
           },
         );
       },

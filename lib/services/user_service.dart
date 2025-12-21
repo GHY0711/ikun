@@ -35,17 +35,22 @@ class UserService {
       throw Exception('User not authenticated');
     }
 
-    await _supabase.from('user').upsert(
-      {
+    final existingUser = await _supabase
+        .from('user')
+        .select('user_email')
+        .eq('user_email', user.email!)
+        .maybeSingle();
+
+    if (existingUser == null) {
+      await _supabase.from('user').insert({
         'user_email': user.email,
         'user_name': nameFromRegister ?? 'User',
         'user_icon': 'assets/images/defaultIcon.png',
         'user_type': 'user',
         'user_status': true,
         'created_at': DateTime.now().toIso8601String(),
-      },
-      onConflict: 'user_email',
-    );
+      });
+    }
   }
 
   static Future<void> logout() async {
