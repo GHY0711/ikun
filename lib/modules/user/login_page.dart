@@ -67,14 +67,11 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {
