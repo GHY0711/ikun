@@ -36,17 +36,21 @@ class AuthWrapper extends StatelessWidget {
               );
             }
 
-            final userType = snapshot.data!;
+            final result = snapshot.data!;
 
-            if (userType == 'staff') {
+            if (result == 'blocked') {
+              return const BlockPage();
+            }
+
+            if (result == 'staff') {
               return const UserManagementPage();
             }
 
-            if (userType == 'user') {
+            if (result == 'user') {
               return const HomePage();
             }
 
-            return const BlockPage();
+            return const StartPage();
           },
         );
       },
@@ -65,9 +69,13 @@ class AuthWrapper extends StatelessWidget {
 
     final data = await Supabase.instance.client
         .from('user')
-        .select('user_type')
+        .select('user_type, user_status')
         .eq('user_email', user.email!)
         .single();
+
+    if (data['user_status'] == false) {
+      return 'blocked';
+    }
 
     return data['user_type'] as String;
   }

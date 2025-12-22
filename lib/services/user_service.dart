@@ -19,6 +19,41 @@ class UserService {
     }
   }
 
+  static Future<List<Map<String, dynamic>>> fetchAllUsers() async {
+    final response = await _supabase
+        .from('user')
+        .select(
+          'user_name, user_email, user_gender, user_status, user_type, created_at',
+        )
+        .eq('user_type', 'user')
+        .order('created_at');
+
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  static Future<void> updateUserStatus({
+    required String email,
+    required bool newStatus,
+  }) async {
+    await _supabase
+        .from('user')
+        .update({'user_status': newStatus})
+        .eq('user_email', email);
+  }
+
+  static Future<String?> getCurrentUserRole() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return null;
+
+    final response = await _supabase
+        .from('user')
+        .select('user_type')
+        .eq('user_email', user.email!)
+        .single();
+
+    return response['user_type'];
+  }
+
   static Future<void> signInWithGoogle() async {
     await _supabase.auth.signInWithOAuth(
       OAuthProvider.google,
@@ -26,9 +61,7 @@ class UserService {
     );
   }
 
-  static Future<void> handlePostLogin({
-    String? nameFromRegister,
-  }) async {
+  static Future<void> handlePostLogin({String? nameFromRegister}) async {
     final user = _supabase.auth.currentUser;
 
     if (user == null || user.email == null) {
@@ -51,17 +84,6 @@ class UserService {
         'created_at': DateTime.now().toIso8601String(),
       });
     }
-  }
-
-  static Future<List<Map<String, dynamic>>> fetchAllUsers() async {
-    final response = await _supabase
-        .from('user')
-        .select(
-      'user_name, user_email, user_gender, user_status, user_type, created_at',
-    )
-        .order('created_at');
-
-    return List<Map<String, dynamic>>.from(response);
   }
 
   static Future<void> logout() async {
