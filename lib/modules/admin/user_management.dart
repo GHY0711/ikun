@@ -21,6 +21,19 @@ class _UserManagementPageState extends State<UserManagementPage> {
 
   final _searchCtrl = TextEditingController();
 
+  int _currentPage = 1;
+  final int _rowsPerPage = 5;
+
+  bool _sortAsc = true;
+  String _sortField = 'name';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUsers();
+    _searchCtrl.addListener(_onSearch);
+  }
+
   @override
   void dispose() {
     _searchCtrl.dispose();
@@ -30,7 +43,6 @@ class _UserManagementPageState extends State<UserManagementPage> {
   Future<void> _fetchUsers() async {
     try {
       final users = await UserService.fetchAllUsers();
-
       setState(() {
         _users = users;
         _filteredUsers = users;
@@ -44,28 +56,77 @@ class _UserManagementPageState extends State<UserManagementPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchUsers();
-    _searchCtrl.addListener(_onSearch);
-  }
-
   void _onSearch() {
     final query = _searchCtrl.text.toLowerCase();
-
     setState(() {
+      _currentPage = 1;
       _filteredUsers = _users.where((user) {
         final name = (user.name ?? '').toLowerCase();
-        final email = (user.email ?? '').toLowerCase();
+        final email = user.email.toLowerCase();
         return name.contains(query) || email.contains(query);
       }).toList();
     });
   }
 
+  void _sortUsers(String field) {
+    setState(() {
+      if (_sortField == field) {
+        _sortAsc = !_sortAsc;
+      } else {
+        _sortField = field;
+        _sortAsc = true;
+      }
+
+      _filteredUsers.sort((a, b) {
+        final aValue = field == 'name'
+            ? (a.name ?? '').toLowerCase()
+            : a.email.toLowerCase();
+        final bValue = field == 'name'
+            ? (b.name ?? '').toLowerCase()
+            : b.email.toLowerCase();
+        return _sortAsc
+            ? aValue.compareTo(bValue)
+            : bValue.compareTo(aValue);
+      });
+    });
+  }
+
+  List<UserModel> get _pagedUsers {
+    final start = (_currentPage - 1) * _rowsPerPage;
+    final end = start + _rowsPerPage;
+    return _filteredUsers.sublist(
+      start,
+      end > _filteredUsers.length ? _filteredUsers.length : end,
+    );
+  }
+
+  Widget _paginationControls() {
+    final totalPages = (_filteredUsers.length / _rowsPerPage).ceil();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text('Page $_currentPage of $totalPages'),
+          IconButton(
+            icon: const Icon(Icons.chevron_left),
+            onPressed: _currentPage > 1
+                ? () => setState(() => _currentPage--)
+                : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right),
+            onPressed: _currentPage < totalPages
+                ? () => setState(() => _currentPage++)
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-
     Future<bool?> showConfirmDialog({
       required BuildContext context,
       required String title,
@@ -87,21 +148,12 @@ class _UserManagementPageState extends State<UserManagementPage> {
           content: Text(message),
           actions: [
             TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.black,
-              ),
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text(
-                'Confirm',
-              ),
+              child: const Text('Confirm'),
             ),
           ],
         ),
@@ -111,158 +163,156 @@ class _UserManagementPageState extends State<UserManagementPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Management'),
-        backgroundColor: Color(0xFF93DA97),
+        backgroundColor: const Color(0xFF93DA97),
       ),
       drawer: const AdminDrawer(),
       body: Padding(
-        padding: const EdgeInsets.all(25.0),
-        child: SafeArea(
-          child: Column(
-            children: [
-              TextFormField(
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hint: Text('Search'),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+        padding: const EdgeInsets.all(25),
+        child: Column(
+          children: [
+            TextFormField(
+              controller: _searchCtrl,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Search',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                controller: _searchCtrl,
-                keyboardType: TextInputType.text,
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columnSpacing: 32,
-                    headingRowHeight: 50,
-                    dataRowHeight: 56,
-                    headingRowColor: MaterialStateProperty.all(
-                      Color(0xFF93DA97),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columnSpacing: 32,
+                  headingRowHeight: 50,
+                  dataRowHeight: 56,
+                  headingRowColor: MaterialStateProperty.all(
+                    const Color(0xFF93DA97),
+                  ),
+                  columns: [
+                    const DataColumn(
+                      label: Text('No',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
-                    columns: const[
-                      DataColumn(
-                        label: Text(
-                          'No',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          'Name',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          'Email',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          'Gender',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          'Status',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          'Action',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                    rows: List.generate(_filteredUsers.length, (index) {
-                      final user = _filteredUsers[index];
-                      final bool isActive = user.status == true;
-
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Text(
-                              '${index + 1}',
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                          DataCell(Text(user.name ?? '-')),
-                          DataCell(Text(user.email ?? '-')),
-                          DataCell(Text(user.gender ?? '-')),
-                          DataCell(
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: isActive ? Colors.green.shade100 : Colors.red.shade100,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                isActive ? 'Active' : 'Blocked',
+                    DataColumn(
+                      label: InkWell(
+                        onTap: () => _sortUsers('name'),
+                        child: Row(
+                          children: [
+                            const Text('Name',
                                 style: TextStyle(
-                                  color: isActive ? Colors.green.shade800 : Colors.red.shade800,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                    fontWeight: FontWeight.bold)),
+                            Icon(
+                              _sortField == 'name'
+                                  ? (_sortAsc
+                                  ? Icons.arrow_upward
+                                  : Icons.arrow_downward)
+                                  : Icons.unfold_more,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: InkWell(
+                        onTap: () => _sortUsers('email'),
+                        child: Row(
+                          children: [
+                            const Text('Email',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            Icon(
+                              _sortField == 'email'
+                                  ? (_sortAsc
+                                  ? Icons.arrow_upward
+                                  : Icons.arrow_downward)
+                                  : Icons.unfold_more,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const DataColumn(
+                      label: Text('Gender',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    const DataColumn(
+                      label: Text('Status',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    const DataColumn(
+                      label: Text('Action',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                  rows: List.generate(_pagedUsers.length, (index) {
+                    final user = _pagedUsers[index];
+                    final isActive = user.status;
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(
+                            '${index + 1 + (_currentPage - 1) * _rowsPerPage}')),
+                        DataCell(Text(user.name ?? '-')),
+                        DataCell(Text(user.email)),
+                        DataCell(Text(user.gender ?? '-')),
+                        DataCell(Text(isActive ? 'Active' : 'Blocked')),
+                        DataCell(Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                isActive
+                                    ? Icons.block
+                                    : Icons.check_circle,
+                                color: isActive
+                                    ? Colors.red
+                                    : Colors.green,
                               ),
+                              onPressed: () async {
+                                final confirmed =
+                                await showConfirmDialog(
+                                  context: context,
+                                  title: isActive
+                                      ? 'Block User'
+                                      : 'Activate User',
+                                  message: user.email,
+                                );
+                                if (confirmed != true) return;
+                                await UserService.updateUserStatus(
+                                  email: user.email,
+                                  newStatus: !isActive,
+                                );
+                                _fetchUsers();
+                              },
                             ),
-                          ),
-                          DataCell(
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(
-                                    isActive ? Icons.block : Icons.check_circle,
-                                    color: isActive ? Colors.red : Colors.green,
+                            IconButton(
+                              icon: const Icon(Icons.visibility),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => UserDetailPage(
+                                      userId: user.id,
+                                    ),
                                   ),
-                                  tooltip: isActive ? 'Block user' : 'Activate user',
-                                  onPressed: () async {
-                                    final confirmed = await showConfirmDialog(
-                                      context: context,
-                                      title: isActive ? 'Block User' : 'Activate User',
-                                      message: isActive
-                                          ? 'Are you sure you want to block this user?\n\n${user.email}'
-                                          : 'Are you sure you want to activate this user?\n\n${user.email}',
-                                    );
-
-                                    if (confirmed != true) return;
-
-                                    await UserService.updateUserStatus(
-                                      email: user.email,
-                                      newStatus: !isActive,
-                                    );
-
-                                    _fetchUsers();
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.visibility),
-                                  tooltip: 'View details',
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (BuildContext context) => UserDetailPage(
-                                        userId: user.id,
-                                      )),
-                                    );
-                                  },
-                                ),
-                              ],
+                                );
+                              },
                             ),
-                          ),
-                        ],
-                      );
-                    }),
-                  ),
+                          ],
+                        )),
+                      ],
+                    );
+                  }),
                 ),
               ),
-            ],
-          ),
+            ),
+            _paginationControls(),
+          ],
         ),
       ),
     );
