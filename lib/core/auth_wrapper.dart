@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../modules/user/start_page.dart';
 import '../../modules/user/home_page.dart';
 import '../../modules/admin/admin_home.dart';
+import '../modules/moodRecords/mood_records_page.dart';
 import '../services/user_service.dart';
 import '../modules/admin/user_management.dart';
 import 'block_page.dart';

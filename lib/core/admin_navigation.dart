@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tikwei_assignment/modules/admin/user_management.dart';
+import '../modules/moodCategory/mood_category_page.dart';
+import '../modules/moodTypes/mood_types_page.dart';
 import '../services/user_service.dart';
 import '../modules/user/start_page.dart';
 
@@ -45,6 +47,26 @@ class AdminDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (BuildContext context) => const UserManagementPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.category),
+            title: const Text('Mood Category'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (BuildContext context) => const MoodCategoryPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.mood),
+            title: const Text('Mood Type'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (BuildContext context) => const MoodTypePage()),
               );
             },
           ),
