@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tikwei_assignment/modules/admin/user_detail_page.dart';
 import '../../core/admin_navigation.dart';
 import '../../services/user_service.dart';
+import '../../models/user_model.dart';
 
 class UserManagementPage extends StatefulWidget {
   const UserManagementPage({super.key});
@@ -14,8 +15,8 @@ class UserManagementPage extends StatefulWidget {
 class _UserManagementPageState extends State<UserManagementPage> {
   final supabase = Supabase.instance.client;
 
-  List<Map<String, dynamic>> _users = [];
-  List<Map<String, dynamic>> _filteredUsers = [];
+  List<UserModel> _users = [];
+  List<UserModel> _filteredUsers = [];
   bool _isLoading = true;
 
   final _searchCtrl = TextEditingController();
@@ -55,8 +56,8 @@ class _UserManagementPageState extends State<UserManagementPage> {
 
     setState(() {
       _filteredUsers = _users.where((user) {
-        final name = (user['user_name'] ?? '').toLowerCase();
-        final email = (user['user_email'] ?? '').toLowerCase();
+        final name = (user.name ?? '').toLowerCase();
+        final email = (user.email ?? '').toLowerCase();
         return name.contains(query) || email.contains(query);
       }).toList();
     });
@@ -182,7 +183,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                       ],
                         rows: List.generate(_filteredUsers.length, (index) {
                           final user = _filteredUsers[index];
-                          final bool isActive = user['user_status'] == true;
+                          final bool isActive = user.status == true;
 
                           return DataRow(
                             cells: [
@@ -192,9 +193,9 @@ class _UserManagementPageState extends State<UserManagementPage> {
                                   style: const TextStyle(color: Colors.grey),
                                 ),
                               ),
-                              DataCell(Text(user['user_name'] ?? '-')),
-                              DataCell(Text(user['user_email'] ?? '-')),
-                              DataCell(Text(user['user_gender'] ?? '-')),
+                              DataCell(Text(user.name ?? '-')),
+                              DataCell(Text(user.email ?? '-')),
+                              DataCell(Text(user.gender ?? '-')),
                               DataCell(
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -225,14 +226,14 @@ class _UserManagementPageState extends State<UserManagementPage> {
                                           context: context,
                                           title: isActive ? 'Block User' : 'Activate User',
                                           message: isActive
-                                              ? 'Are you sure you want to block this user?\n\n${user['user_email']}'
-                                              : 'Are you sure you want to activate this user?\n\n${user['user_email']}',
+                                              ? 'Are you sure you want to block this user?\n\n${user.email}'
+                                              : 'Are you sure you want to activate this user?\n\n${user.email}',
                                         );
 
                                         if (confirmed != true) return;
 
                                         await UserService.updateUserStatus(
-                                          email: user['user_email'],
+                                          email: user.email,
                                           newStatus: !isActive,
                                         );
 
@@ -245,7 +246,9 @@ class _UserManagementPageState extends State<UserManagementPage> {
                                       onPressed: () {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (BuildContext context) => UserDetailPage()),
+                                          MaterialPageRoute(builder: (BuildContext context) => UserDetailPage(
+                                            userId: user.id,
+                                          )),
                                         );
                                       },
                                     ),
