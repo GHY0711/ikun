@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tikwei_assignment/modules/moodRecords/mood_records_page.dart';
 import '../../services/user_service.dart';
 import 'start_page.dart';
 import 'profile_page.dart';
@@ -33,13 +34,14 @@ class HomePage extends StatelessWidget{
                 },
                 child: const Text('Profile Page'),
               ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.video_library),
-                label: const Text('Access Resources'),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/resources');
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MoodRecordsPage()),
+                  );
                 },
+                child: const Text('Mood Records Page'),
               ),
             ],
           ),
