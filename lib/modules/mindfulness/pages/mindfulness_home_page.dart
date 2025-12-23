@@ -11,6 +11,7 @@ import '../models/mindfulness_practice_model.dart';
 import '../models/mindfulness_session_model.dart';
 import '../services/mindfulness_service.dart';
 import 'mindfulness_player_page.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class MindfulnessHomePage extends StatefulWidget {
   const MindfulnessHomePage({super.key});
@@ -50,7 +51,9 @@ class _MindfulnessHomePageState extends State<MindfulnessHomePage> {
                   padding: const EdgeInsets.symmetric(horizontal: 18),
                   child: _tabIndex == 0
                       ? const _MindfulnessTimerPanel()
-                      : const _HistoryPanel(),
+                      : _tabIndex == 1
+                      ? const _HistoryPanel()
+                      : const _InsightsPanel(),
                 ),
               ),
               const SizedBox(height: 10),
@@ -93,7 +96,7 @@ class _Segmented extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 260,
+      width: 340,
       height: 38,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -102,26 +105,17 @@ class _Segmented extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            child: _SegButton(
-              label: 'Mindfulness',
-              selected: value == 0,
-              onTap: () => onChanged(0),
-            ),
-          ),
+          Expanded(child: _SegButton(label: 'Mindfulness', selected: value == 0, onTap: () => onChanged(0))),
           const SizedBox(width: 6),
-          Expanded(
-            child: _SegButton(
-              label: 'History',
-              selected: value == 1,
-              onTap: () => onChanged(1),
-            ),
-          ),
+          Expanded(child: _SegButton(label: 'History', selected: value == 1, onTap: () => onChanged(1))),
+          const SizedBox(width: 6),
+          Expanded(child: _SegButton(label: 'Insights', selected: value == 2, onTap: () => onChanged(2))),
         ],
       ),
     );
   }
 }
+
 
 class _SegButton extends StatelessWidget {
   const _SegButton({required this.label, required this.selected, required this.onTap});
@@ -1276,4 +1270,258 @@ class _PracticeThumb extends StatelessWidget {
     );
   }
 
+}
+class _InsightsPanel extends StatefulWidget {
+  const _InsightsPanel();
+
+  @override
+  State<_InsightsPanel> createState() => _InsightsPanelState();
+}
+
+class _InsightsPanelState extends State<_InsightsPanel> {
+  final _service = MindfulnessService();
+  int _rangeDays = 7; // 7 / 30
+  static const double _capMinutes = 60.0;
+
+  Future<List<MindfulnessSession>> _load() async {
+    final now = DateTime.now();
+    final from = DateTime(now.year, now.month, now.day).subtract(Duration(days: _rangeDays - 1));
+    final to = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    return _service.fetchSessions(from: from, to: to, limit: 1000);
+  }
+
+  Map<DateTime, int> _groupByDaySeconds(List<MindfulnessSession> sessions) {
+    final map = <DateTime, int>{};
+    for (final s in sessions) {
+      final dt = s.startedAt.toLocal();
+      final day = DateTime(dt.year, dt.month, dt.day);
+      map[day] = (map[day] ?? 0) + (s.durationSeconds);
+    }
+    return map;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<MindfulnessSession>>(
+      future: _load(),
+      builder: (context, snap) {
+        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        final sessions = snap.data!;
+        if (sessions.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text('Insights', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
+                  ),
+                  _RangeToggle(
+                    value: _rangeDays,
+                    onChanged: (v) => setState(() => _rangeDays = v),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Expanded(child: Center(child: Text('No data yet. Do some sessions first.'))),
+            ],
+          );
+        }
+
+        final grouped = _groupByDaySeconds(sessions);
+
+        final now = DateTime.now();
+        final start = DateTime(now.year, now.month, now.day).subtract(Duration(days: _rangeDays - 1));
+        final days = List.generate(_rangeDays, (i) => start.add(Duration(days: i)));
+
+        final rawMinutes = days.map((d) => (grouped[d] ?? 0) / 60.0).toList();
+        final valuesMinutes = rawMinutes.map((m) => m.clamp(0.0, _capMinutes)).toList();
+        final maxY = _capMinutes;
+
+        final df = DateFormat('MM/dd');
+        final totalDays = valuesMinutes.length;
+        final double barWidth = 18;
+        final double groupSpace = 10;
+        final double chartWidth = totalDays * (barWidth + groupSpace);
+
+        final groups = <BarChartGroupData>[];
+        for (var i = 0; i < days.length; i++) {
+          final y = valuesMinutes[i];
+          groups.add(
+            BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: valuesMinutes[i],
+                  width: 16,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Insights', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
+                ),
+                _RangeToggle(
+                  value: _rangeDays,
+                  onChanged: (v) => setState(() => _rangeDays = v),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            _InsightSummaryCard(
+              sessions: sessions,
+              rangeDays: _rangeDays,
+            ),
+
+            const SizedBox(height: 12),
+
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.black.withOpacity(0.12)),
+                ),
+                child: Builder(
+                  builder: (context) {
+                    final totalDays = days.length;
+                    const double barWidth = 16;
+                    const double groupSpace = 20;
+
+                    final double chartWidth = totalDays * (barWidth + groupSpace);
+                    final chart = BarChart(
+                      BarChartData(
+                        maxY: maxY,
+                        alignment: BarChartAlignment.start,
+                        groupsSpace: 24,
+
+                        barTouchData: BarTouchData(
+                          enabled: true,
+                          touchTooltipData: BarTouchTooltipData(
+                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                              final real = rawMinutes[group.x];
+                              final suffix = real > _capMinutes ? ' (capped)' : '';
+                              return BarTooltipItem(
+                                '${real.toStringAsFixed(1)}m$suffix',
+                                const TextStyle(fontWeight: FontWeight.w700),
+                              );
+                            },
+                          ),
+                        ),
+                        gridData: FlGridData(show: true),
+                        borderData: FlBorderData(show: false),
+                        barGroups: groups,
+
+                        titlesData: FlTitlesData(
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 36,
+                              interval: 15,
+                              getTitlesWidget: (value, meta) {
+                                if (value % 15 != 0) return const SizedBox.shrink();
+                                return Text(value.toInt().toString());
+                              },
+                            ),
+                          ),
+
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 28,
+                              interval: 1,
+
+                              getTitlesWidget: (value, meta) {
+                                final i = value.toInt();
+                                if (i < 0 || i >= totalDays) return const SizedBox.shrink();
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Text(df.format(days[i]), style: const TextStyle(fontSize: 10)),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+
+                    if (_rangeDays <= 7) return chart;
+
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: chartWidth.clamp(MediaQuery.of(context).size.width, double.infinity),
+                        child: chart,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _RangeToggle extends StatelessWidget {
+  const _RangeToggle({required this.value, required this.onChanged});
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<int>(
+      segments: const [
+        ButtonSegment(value: 7, label: Text('7D')),
+        ButtonSegment(value: 30, label: Text('30D')),
+      ],
+      selected: {value},
+      onSelectionChanged: (s) => onChanged(s.first),
+    );
+  }
+}
+
+class _InsightSummaryCard extends StatelessWidget {
+  const _InsightSummaryCard({required this.sessions, required this.rangeDays});
+  final List<MindfulnessSession> sessions;
+  final int rangeDays;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalSeconds = sessions.fold<int>(0, (sum, s) => sum + s.durationSeconds);
+    final totalMinutes = (totalSeconds / 60).round();
+    final avgSeconds = sessions.isEmpty ? 0 : (totalSeconds / sessions.length).round();
+    final avgMinutes = (avgSeconds / 60).toStringAsFixed(1);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black.withOpacity(0.12)),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: Text('Sessions: ${sessions.length}', style: const TextStyle(fontWeight: FontWeight.w700))),
+          Expanded(child: Text('Total: ${totalMinutes}m', style: const TextStyle(fontWeight: FontWeight.w700))),
+          Expanded(child: Text('Avg: ${avgMinutes}m', style: const TextStyle(fontWeight: FontWeight.w700))),
+        ],
+      ),
+    );
+  }
 }
