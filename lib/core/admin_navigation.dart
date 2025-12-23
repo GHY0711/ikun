@@ -74,13 +74,6 @@ class AdminDrawer extends StatelessWidget {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.dashboard),
-            title: const Text('Dashboard'),
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/admin-dashboard');
-            },
-          ),
-          ListTile(
             leading: const Icon(Icons.library_books),
             title: const Text('Manage Resources'),
             subtitle: const Text('List, add, edit, publish/unpublish'),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tikwei_assignment/modules/mindfulness/pages/mindfulness_home_page.dart';
 import 'package:tikwei_assignment/modules/moodRecords/mood_records_page.dart';
 import '../../services/user_service.dart';
 import 'start_page.dart';
@@ -15,6 +16,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         automaticallyImplyLeading: false,
         title: const Text('IKUN Home'),
         backgroundColor: _primaryGreen,
@@ -72,6 +74,27 @@ class HomePage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _HomeActionButton(
+              icon: Icons.video_library,
+              label: 'Resources',
+              color: Colors.green.shade400,
+              onTap: () {
+                Navigator.pushNamed(context, '/resources');
+              },
+            ),
+            const SizedBox(height: 12),
+            _HomeActionButton(
+              icon: Icons.self_improvement,
+              label: 'Mindfulness',
+              color: Colors.green.shade500,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MindfulnessHomePage()),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            _HomeActionButton(
               icon: Icons.person,
               label: 'Profile',
               color: Colors.green.shade500,
@@ -82,35 +105,7 @@ class HomePage extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 12),
-            _HomeActionButton(
-              icon: Icons.video_library,
-              label: 'Resources',
-              color: Colors.green.shade400,
-              onTap: () {
-                Navigator.pushNamed(context, '/resources');
-              },
-            ),
             const Spacer(),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.logout),
-              label: const Text('Logout'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade400,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: () async {
-                await UserService.logout();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const StartPage()),
-                );
-              },
-            ),
           ],
         ),
       ),
