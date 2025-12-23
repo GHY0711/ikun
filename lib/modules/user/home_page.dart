@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/user_service.dart';
 import 'start_page.dart';
 import 'profile_page.dart';
+import '../../modules/mindfulness/pages/mindfulness_home_page.dart';
+
 
 class HomePage extends StatelessWidget{
   const HomePage({super.key});
@@ -32,6 +34,15 @@ class HomePage extends StatelessWidget{
                   );
                 },
                 child: const Text('Profile Page'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MindfulnessHomePage()),
+                  );
+                },
+                child: const Text('Mindfulness'),
               ),
             ],
           ),
