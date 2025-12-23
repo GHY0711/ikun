@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 final _sb = Supabase.instance.client;
 
+// Data transfer object for a resource row
 class ResourceDto {
   final int id;
   final String title;
@@ -25,6 +26,7 @@ class ResourceDto {
     this.content,
   });
 
+  // Map -> DTO conversion
   factory ResourceDto.fromMap(Map<String, dynamic> map) {
     return ResourceDto(
       id: map['resource_id'] as int,
@@ -41,6 +43,7 @@ class ResourceDto {
     );
   }
 
+  // Normalize tags into a List<String>
   static List<String> _coerceTags(dynamic raw) {
     if (raw == null) return [];
     if (raw is List) return raw.map((e) => '$e').toList();
@@ -55,6 +58,7 @@ class ResourceDto {
   }
 }
 
+// DTO for resource_content row
 class ResourceContent {
   final String? videoUrl;
   final String? articleBody;
@@ -76,6 +80,7 @@ class ResourceContent {
     this.officeHours,
   });
 
+  // Map -> DTO conversion
   factory ResourceContent.fromMap(Map<String, dynamic> map) {
     return ResourceContent(
       videoUrl: map['video_url'],
@@ -89,6 +94,7 @@ class ResourceContent {
     );
   }
 
+  // DTO -> Map for inserts/updates
   Map<String, dynamic> toJson() => {
     'video_url': videoUrl,
     'article_body': articleBody,
@@ -102,14 +108,14 @@ class ResourceContent {
 }
 
 class ResourceService {
-  // current user_id (bigint) resolved by email
+  // Resolve current user_id by email (throws if unauthenticated)
   static Future<int> _currentUserId() async {
     final user = _sb.auth.currentUser;
     if (user == null || user.email == null) {
       throw Exception('Not authenticated');
     }
     final data = await _sb
-        .from('user') // <- was from('"user"')
+        .from('user')
         .select('user_id, user_email')
         .order('user_id')
         .limit(500);
@@ -120,6 +126,7 @@ class ResourceService {
     return row['user_id'] as int;
   }
 
+  // Fetch published, not-deleted resources with optional filters
   static Future<List<ResourceDto>> fetchPublished({
     int? categoryId,
     String? search,
@@ -183,6 +190,7 @@ class ResourceService {
     }
   }
 
+  // Fetch single published resource by id
   static Future<ResourceDto?> fetchById(int id) async {
     try {
       final data = await _sb
@@ -212,7 +220,7 @@ class ResourceService {
     }
   }
 
-  // Favorites: ids
+  // Fetch favorite resource IDs for current user
   static Future<Set<int>> fetchFavoriteIds() async {
     try {
       final uid = await _currentUserId();
@@ -231,7 +239,7 @@ class ResourceService {
     }
   }
 
-  // Favorites: full resources
+  // Fetch favorite resources (full objects) for current user
   static Future<List<ResourceDto>> fetchFavoriteResources() async {
     try {
       final uid = await _currentUserId();
@@ -263,7 +271,7 @@ class ResourceService {
     }
   }
 
-  // Toggle favorite (insert/delete)
+  // Insert/delete favorite entry
   static Future<void> toggleFavorite(int resourceId, bool shouldBeFav) async {
     final uid = await _currentUserId();
     try {
@@ -285,7 +293,7 @@ class ResourceService {
     }
   }
 
-  // Recently viewed: record
+  // Record a "recently viewed" resource
   static Future<void> recordView(int resourceId) async {
     try {
       final uid = await _currentUserId();
@@ -299,7 +307,7 @@ class ResourceService {
     }
   }
 
-  // Recently viewed: list
+  // Fetch recent resources (ordered by viewed_at)
   static Future<List<ResourceDto>> fetchRecent({int limit = 10}) async {
     try {
       final uid = await _currentUserId();
@@ -327,7 +335,7 @@ class ResourceService {
     }
   }
 
-  // Categories
+  // Fetch categories
   static Future<List<Map<String, dynamic>>> fetchCategories() async {
     try {
       final data =
@@ -339,7 +347,7 @@ class ResourceService {
     }
   }
 
-  // Admin: fetch all
+  // Admin: fetch all resources (optionally include deleted)
   static Future<List<ResourceDto>> fetchAll({bool includeDeleted = false}) async {
     try {
       final data = await _sb.from('resource').select('''
@@ -362,7 +370,7 @@ class ResourceService {
     }
   }
 
-  // Admin: upsert resource and its content
+  // Admin: insert/update resource and its content
   static Future<void> upsertResource({
     int? resourceId,
     required int categoryId,
@@ -377,8 +385,8 @@ class ResourceService {
       'category_id': categoryId,
       'title': title,
       'summary': summary,
-      'content_type': contentType, // critical: send new type
-      'tags': tags?.join(','),     // comma-separated
+      'content_type': contentType,
+      'tags': tags?.join(','), // comma-separated
       'is_published': isPublished,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
       if (resourceId == null)
@@ -396,11 +404,9 @@ class ResourceService {
             .single();
         id = inserted['resource_id'] as int;
       } else {
-        // update; if no rows affected -> throw
-        final updated = await _sb
-            .from('resource')
-            .update(payload)
-            .eq('resource_id', resourceId);
+        // update
+        final updated =
+        await _sb.from('resource').update(payload).eq('resource_id', resourceId);
 
         if (updated is List && updated.isEmpty) {
           throw Exception('Update blocked or not found (id=$resourceId)');
@@ -408,7 +414,7 @@ class ResourceService {
         id = resourceId;
       }
 
-      // insert/update content
+      // content upsert
       if (content != null) {
         final existing = await _sb
             .from('resource_content')
@@ -430,10 +436,11 @@ class ResourceService {
       }
     } catch (e) {
       print('Error upserting resource: $e');
-      rethrow; // surface the error to the UI
+      rethrow;
     }
   }
 
+  // Admin: set publish flag
   static Future<void> setPublish(int id, bool publish) async {
     try {
       await _sb.from('resource').update({
@@ -445,6 +452,7 @@ class ResourceService {
     }
   }
 
+  // Admin: soft delete
   static Future<void> softDelete(int id) async {
     try {
       await _sb.from('resource').update({

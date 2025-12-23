@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/resource_service.dart';
 
-class FavoritesPage extends StatefulWidget { // <-- renamed
+class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
 
   @override
@@ -9,7 +9,9 @@ class FavoritesPage extends StatefulWidget { // <-- renamed
 }
 
 class _FavoritesPageState extends State<FavoritesPage> {
+  // Async load future
   late Future<void> _loadFuture;
+  // Favorite items and ids
   List<ResourceDto> _items = [];
   Set<int> _favoriteIds = {};
   bool _isLoading = false;
@@ -20,6 +22,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
     _loadFuture = _load();
   }
 
+  // Load favorites list
   Future<void> _load() async {
     if (_isLoading) return;
     _isLoading = true;
@@ -43,6 +46,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
     }
   }
 
+  // Toggle favorite state for an item
   Future<void> _onFavoriteToggle(int id) async {
     final isFav = _favoriteIds.contains(id);
     try {
@@ -57,6 +61,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
     }
   }
 
+  // UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,6 +77,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (_items.isEmpty) {
+            // Empty state with pull-to-refresh
             return RefreshIndicator(
               onRefresh: _load,
               child: ListView(
@@ -84,6 +90,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
               ),
             );
           }
+          // List of favorite cards
           return RefreshIndicator(
             onRefresh: _load,
             child: ListView.builder(
@@ -101,6 +108,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
     );
   }
 
+  // Card UI for a favorite resource
   Widget _buildResourceCard(ResourceDto r, bool isFav) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -118,6 +126,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Title row + favorite toggle
               Row(
                 children: [
                   Expanded(
@@ -143,6 +152,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 ],
               ),
               const SizedBox(height: 8),
+              // Summary
               Text(
                 r.summary ?? 'No description',
                 maxLines: 2,
@@ -150,6 +160,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 style: TextStyle(fontSize: 13, color: Colors.grey[700]),
               ),
               const SizedBox(height: 8),
+              // Category and content type chips
               Row(
                 children: [
                   if (r.categoryName != null)
@@ -179,6 +190,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 ],
               ),
               const SizedBox(height: 8),
+              // Tags
               if (r.tags.isNotEmpty)
                 Wrap(
                   spacing: 4,
@@ -206,6 +218,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
     );
   }
 
+  // Icon helper
   IconData _iconForType(String t) {
     switch (t) {
       case 'video':

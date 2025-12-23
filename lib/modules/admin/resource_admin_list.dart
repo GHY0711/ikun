@@ -10,8 +10,11 @@ class ResourceAdminListPage extends StatefulWidget {
 }
 
 class _ResourceAdminListPageState extends State<ResourceAdminListPage> {
+  // Future for initial load
   late Future<void> _future;
+  // Resource list
   List<ResourceDto> _items = [];
+  // Loading flag for spinner
   bool _loading = true;
 
   @override
@@ -20,6 +23,7 @@ class _ResourceAdminListPageState extends State<ResourceAdminListPage> {
     _future = _load();
   }
 
+  // Load all resources (admin view)
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
@@ -35,13 +39,15 @@ class _ResourceAdminListPageState extends State<ResourceAdminListPage> {
     }
   }
 
+  // Refresh helper
   Future<void> _refresh() async {
     _future = _load();
     await _future;
   }
 
+  // Toggle publish flag with optimistic update
   Future<void> _togglePublish(ResourceDto r, bool val) async {
-    // optimistic update
+    // optimistic UI update
     setState(() {
       final idx = _items.indexWhere((x) => x.id == r.id);
       if (idx != -1) {
@@ -88,6 +94,7 @@ class _ResourceAdminListPageState extends State<ResourceAdminListPage> {
     }
   }
 
+  // UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(

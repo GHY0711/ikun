@@ -14,15 +14,24 @@ class ResourceDetailPage extends StatefulWidget {
 }
 
 class _ResourceDetailPageState extends State<ResourceDetailPage> {
+  // Async load future and route arg
   late Future<ResourceDto?> _future;
   late int _resourceId;
+
+  // Favorite state
   bool _isFav = false;
 
+  // Controllers for media
   YoutubePlayerController? _ytController;
   VideoPlayerController? _videoController;
   ChewieController? _chewieController;
   String? _ytErrorText;
 
+  // Green palette helpers
+  Color get _primaryGreen => Colors.green.shade600;
+  Color get _chipGreen => Colors.green.shade100;
+
+  // Read route args and kick off load
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -30,6 +39,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     _future = _load();
   }
 
+  // Dispose controllers to avoid leaks
   @override
   void dispose() {
     _ytController?.dispose();
@@ -38,6 +48,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     super.dispose();
   }
 
+  // Load resource, record view, and sync favorites
   Future<ResourceDto?> _load() async {
     try {
       final r = await ResourceService.fetchById(_resourceId);
@@ -51,6 +62,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     }
   }
 
+  // Toggle favorite state
   Future<void> _toggleFav() async {
     try {
       await ResourceService.toggleFavorite(_resourceId, !_isFav);
@@ -72,6 +84,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     }
   }
 
+  // Main UI with FutureBuilder
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<ResourceDto?>(
@@ -82,13 +95,21 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
         }
         if (snap.hasError) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Error')),
+            appBar: AppBar(
+              title: const Text('Error'),
+              backgroundColor: _primaryGreen,
+              foregroundColor: Colors.white,
+            ),
             body: Center(child: Text('Error: ${snap.error}')),
           );
         }
         if (snap.data == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Resource')),
+            appBar: AppBar(
+              title: const Text('Resource'),
+              backgroundColor: _primaryGreen,
+              foregroundColor: Colors.white,
+            ),
             body: const Center(child: Text('Resource not found')),
           );
         }
@@ -99,7 +120,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
         return Scaffold(
           appBar: AppBar(
             title: Text(r.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: _primaryGreen,
             foregroundColor: Colors.white,
             actions: [
               IconButton(
@@ -117,6 +138,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Title
                 Text(
                   r.title,
                   style: Theme.of(context)
@@ -125,22 +147,24 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
+                // Category + type chips
                 Row(
                   children: [
                     if (r.categoryName != null)
                       Chip(
                         label: Text(r.categoryName!),
-                        backgroundColor: Colors.deepPurple[100],
+                        backgroundColor: _chipGreen,
                       ),
                     const SizedBox(width: 8),
                     Chip(
                       label: Text(r.contentType),
-                      backgroundColor: Colors.blue[100],
-                      avatar: Icon(_iconForType(r.contentType), size: 16),
+                      backgroundColor: Colors.green.shade50,
+                      avatar: Icon(_iconForType(r.contentType), size: 16, color: _primaryGreen),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
+                // Summary
                 if (r.summary != null)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,6 +181,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
                       const SizedBox(height: 16),
                     ],
                   ),
+                // Content block
                 if (c != null)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,6 +200,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
                       const SizedBox(height: 16),
                     ],
                   ),
+                // Tags
                 if (r.tags.isNotEmpty)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,6 +235,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     );
   }
 
+  // Route to the right content renderer
   Widget _buildContent(String type, ResourceContent c) {
     switch (type) {
       case 'video':
@@ -220,6 +247,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     }
   }
 
+  // Video renderer (YouTube or direct)
   Widget _buildInlineVideo(ResourceContent c) {
     final raw = c.videoUrl?.trim();
     if (raw == null || raw.isEmpty) {
@@ -263,7 +291,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
         child: YoutubePlayer(
           controller: _ytController!,
           showVideoProgressIndicator: true,
-          progressIndicatorColor: Colors.deepPurple,
+          progressIndicatorColor: _primaryGreen,
         ),
       );
     }
@@ -299,6 +327,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     );
   }
 
+  // Extract possible YouTube ID variants
   String? _extractYouTubeIdFromMaybeBare(String url) {
     final trimmed = url.trim();
     if (!trimmed.contains('.') && trimmed.length >= 6 && trimmed.length <= 64) {
@@ -323,6 +352,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     return null;
   }
 
+  // Fallback button to open externally
   Widget _fallbackLaunch(String url, String label) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,12 +362,17 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
         ElevatedButton.icon(
           icon: const Icon(Icons.open_in_new),
           label: Text(label),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primaryGreen,
+            foregroundColor: Colors.white,
+          ),
           onPressed: () => _launchUrl(url),
         ),
       ],
     );
   }
 
+  // Counselling info renderer
   Widget _buildCounsellingContent(ResourceContent c) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,6 +400,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     );
   }
 
+  // External link renderer (kept purple per original)
   Widget _buildExternalLinkContent(ResourceContent c) {
     if (c.externalLink == null || c.externalLink!.isEmpty) {
       return const Text('No external link available');
@@ -396,11 +432,12 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     );
   }
 
+  // Info row helper
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Colors.deepPurple),
+        Icon(icon, size: 20, color: _primaryGreen),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -423,6 +460,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     );
   }
 
+  // Link row helper
   Widget _buildLinkRow(IconData icon, String label, String value, String url) {
     return InkWell(
       onTap: () => _launchUrl(url),
@@ -460,6 +498,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     );
   }
 
+  // Launch URL (external for YouTube, in-app for others)
   Future<void> _launchUrl(String url) async {
     try {
       final normalized = _normalizeUrl(url);
@@ -490,6 +529,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     }
   }
 
+  // Helpers: URL type checks and normalization
   bool _isYouTube(String url) {
     final lower = url.toLowerCase();
     return lower.contains('youtube.com') || lower.contains('youtu.be');
@@ -509,6 +549,7 @@ class _ResourceDetailPageState extends State<ResourceDetailPage> {
     return 'https://$trimmed';
   }
 
+  // Icon helper for content type
   IconData _iconForType(String t) {
     switch (t) {
       case 'video':
