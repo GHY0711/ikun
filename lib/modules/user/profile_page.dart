@@ -201,20 +201,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           const Divider(),
                           const SizedBox(height: 16),
                           ListTile(
-                            leading: const Icon(Icons.lock),
-                            title: const Text('Change Password'),
-                            onTap: () {
-
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.notifications),
-                            title: const Text('Notification Settings'),
-                            onTap: () {
-
-                            },
-                          ),
-                          ListTile(
                             leading: const Icon(Icons.logout, color: Colors.red),
                             title: const Text(
                               'Logout',
