@@ -67,7 +67,8 @@ class _HistoryTabState extends State<HistoryTab> {
         .from('moodRecords')
         .select()
         .eq('user_id', currentUserId)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(1000);
 
     final moodRes = await supabase
         .from('moodTypes')
@@ -540,7 +541,7 @@ class _HistoryTabState extends State<HistoryTab> {
               onChanged: (value) {
                 setState(() => _searchQuery = value);
               },
-              controller: TextEditingController(text: _searchQuery),
+              controller: _searchController,
             ),
           ),
 
