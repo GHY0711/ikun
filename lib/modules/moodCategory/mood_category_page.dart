@@ -407,7 +407,7 @@ class _MoodCategoryPageState extends State<MoodCategoryPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mood Categories'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.green.shade200,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showMoodCategoryDialog(),

@@ -681,7 +681,7 @@ class _MoodTypePageState extends State<MoodTypePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mood Types'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.green.shade200,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditDialog(),
