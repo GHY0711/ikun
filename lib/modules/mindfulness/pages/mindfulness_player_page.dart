@@ -9,7 +9,7 @@ class MindfulnessPlayerPage extends StatefulWidget {
   const MindfulnessPlayerPage({
     super.key,
     required this.title,
-    required this.mediaType, // 'audio' | 'video'
+    required this.mediaType, 
     required this.pathOrUrl,
   });
 
@@ -22,7 +22,7 @@ class MindfulnessPlayerPage extends StatefulWidget {
 }
 
 class _MindfulnessPlayerPageState extends State<MindfulnessPlayerPage> {
-  // Audio
+  
   final AudioPlayer _audioPlayer = GlobalAudioPlayer.player;
   StreamSubscription? _posSub;
   StreamSubscription? _durSub;
@@ -32,13 +32,12 @@ class _MindfulnessPlayerPageState extends State<MindfulnessPlayerPage> {
   PlayerState _playerState = PlayerState.stopped;
   String? _currentSource;
 
-  // Video
+ 
   VideoPlayerController? _videoController;
 
   bool get _isAsset => widget.pathOrUrl.trim().startsWith('assets/');
   String get _audioAssetSource =>
-      widget.pathOrUrl.replaceFirst(RegExp(r'^assets\/'), ''); // assets/audio/x.mp3 -> audio/x.mp3
-
+      widget.pathOrUrl.replaceFirst(RegExp(r'^assets\/'), ''); 
   @override
   void initState() {
     super.initState();
