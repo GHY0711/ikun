@@ -5,10 +5,6 @@ import 'package:tikwei_assignment/models/user_model.dart';
 class UserService {
   static final _supabase = Supabase.instance.client;
 
-  // ========================
-  // AUTH
-  // ========================
-
   static Future<void> registerWithEmail({
     required String name,
     required String email,
@@ -31,14 +27,9 @@ class UserService {
     );
   }
 
-  /// ✅ LOGOUT（可以安心用）
   static Future<void> logout() async {
     await _supabase.auth.signOut();
   }
-
-  // ========================
-  // USER CREATE (POST LOGIN)
-  // ========================
 
   static Future<void> handlePostLogin({String? nameFromRegister}) async {
     final authUser = _supabase.auth.currentUser;
@@ -64,10 +55,6 @@ class UserService {
       });
     }
   }
-
-  // ========================
-  // FETCH
-  // ========================
 
   static Future<List<UserModel>> fetchAllUsers() async {
     final response = await _supabase
@@ -110,10 +97,6 @@ class UserService {
 
     return data['user_type'];
   }
-
-  // ========================
-  // UPDATE
-  // ========================
 
   static Future<void> updateUserStatus({
     required String email,
