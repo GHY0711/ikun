@@ -1,6 +1,6 @@
 class MindfulnessPracticeContent {
-  final String id; // mind_content_id (int8) -> String
-  final String practiceId; // mind_practice_id (int8) -> String
+  final String id;
+  final String practiceId;
   final String contentType;
   final String? audioPath;
   final String? videoPath;
