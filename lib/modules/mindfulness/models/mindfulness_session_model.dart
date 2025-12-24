@@ -1,7 +1,7 @@
 class MindfulnessSession {
-  final String sessionId; // session_id (int8) -> String
-  final String userId; // user_id (int8) -> String
-  final String practiceId; // mind_practice_id (int8) -> String
+  final String sessionId; 
+  final String userId; 
+  final String practiceId; 
   final DateTime startedAt;
   final DateTime endedAt;
   final int durationSeconds;
@@ -47,7 +47,7 @@ class MindfulnessSession {
       final parsed = DateTime.tryParse(v);
       if (parsed != null) return parsed;
     }
-    // 最后兜底
+
     return DateTime.now();
   }
 
