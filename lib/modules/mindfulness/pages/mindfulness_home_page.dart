@@ -430,7 +430,7 @@ class _MindfulnessTimerPanelState extends State<_MindfulnessTimerPanel> {
       MaterialPageRoute(
         builder: (_) => MindfulnessPlayerPage(
           title: type,
-          mediaType: type.toLowerCase(), // 'audio' or 'video'
+          mediaType: type.toLowerCase(), 
           pathOrUrl: path,
         ),
       ),
@@ -751,7 +751,7 @@ class _MindfulnessTimerPanelState extends State<_MindfulnessTimerPanel> {
 
                     const SizedBox(height: 18),
 
-                    // Start/Stop button
+                    
                     InkWell(
                       onTap: () async {
                         if (_isRunning) {
@@ -787,7 +787,7 @@ class _MindfulnessTimerPanelState extends State<_MindfulnessTimerPanel> {
 
                     const SizedBox(height: 18),
 
-                    // Timer
+                   
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -805,7 +805,7 @@ class _MindfulnessTimerPanelState extends State<_MindfulnessTimerPanel> {
 
                     const SizedBox(height: 26),
 
-                    // Tips
+                   
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -1280,7 +1280,7 @@ class _InsightsPanel extends StatefulWidget {
 
 class _InsightsPanelState extends State<_InsightsPanel> {
   final _service = MindfulnessService();
-  int _rangeDays = 7; // 7 / 30
+  int _rangeDays = 7; 
   static const double _capMinutes = 60.0;
 
   Future<List<MindfulnessSession>> _load() async {
