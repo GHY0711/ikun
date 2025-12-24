@@ -252,7 +252,7 @@ class MindfulnessService {
       'mind_practice_id': pid ?? practiceId,
       'content_type': 'audio',
       'audio_path': url,
-      'text_content': (title?.trim().isNotEmpty ?? false) ? title!.trim() : safeName, // 當歌曲名
+      'text_content': (title?.trim().isNotEmpty ?? false) ? title!.trim() : safeName, 
       'sort_order': sortOrder,
     });
   }
@@ -284,7 +284,7 @@ class MindfulnessService {
       'mind_practice_id': pid ?? practiceId,
       'content_type': 'video',
       'video_path': url,
-      'text_content': (title?.trim().isNotEmpty ?? false) ? title!.trim() : safeName, // 當影片名
+      'text_content': (title?.trim().isNotEmpty ?? false) ? title!.trim() : safeName, 
       'sort_order': sortOrder,
     });
   }
